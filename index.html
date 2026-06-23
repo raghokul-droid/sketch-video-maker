@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Whiteboard Animation Engine</title>
   <style>
     :root {
@@ -19,114 +19,125 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-main); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* Top Navigation Bar */
+    /* Responsive Navigation Header */
     header {
       background: var(--panel-bg);
-      padding: 12px 20px;
+      padding: 10px 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      flex-shrink: 0;
     }
-    .brand { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
-    .top-actions { display: flex; gap: 10px; align-items: center; }
+    .brand { font-weight: 700; font-size: 1rem; color: var(--text-main); }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
     
     .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 6px 12px;
+      border-radius: 6px;
       font-weight: 600;
       border: none;
       cursor: pointer;
       transition: all 0.2s ease;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
     .btn-primary { background: var(--accent-color); color: white; }
     .btn-primary:hover { background: var(--accent-hover); }
     .btn-danger { background: var(--danger-color); color: white; display: none; }
 
-    /* Main Workspace Layout */
-    .workspace { flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px; position: relative; overflow: auto; }
+    /* Flexible Workspace Area */
+    .workspace { flex: 1; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; overflow: hidden; min-height: 0; }
     
-    #empty-state { text-align: center; color: var(--text-muted); }
-    #empty-state h3 { margin-bottom: 8px; color: var(--text-main); }
+    #empty-state { text-align: center; color: var(--text-muted); padding: 20px; }
+    #empty-state h3 { margin-bottom: 6px; color: var(--text-main); font-size: 1.1rem; }
+    #empty-state p { font-size: 0.9rem; }
     
-    #canvas-container { position: relative; background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); display: none; overflow: hidden; line-height: 0; }
-    #output-canvas { max-width: 100%; max-height: 70vh; display: block; background: #fff; }
+    #canvas-container { position: relative; background: #fff; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); display: none; overflow: hidden; line-height: 0; max-width: 100%; max-height: 100%; aspect-ratio: 1 / 1; }
+    #output-canvas { width: 100%; height: 100%; max-height: 45vh; display: block; background: #fff; }
+    
+    @media(min-width: 600px) {
+      #output-canvas { max-height: 60vh; }
+    }
     
     #spots-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; }
     .spot {
       position: absolute;
       transform: translate(-50%, -50%);
       border: 2px dashed var(--accent-color);
-      background: rgba(99, 102, 241, 0.05);
-      border-radius: 8px;
+      background: rgba(99, 102, 241, 0.03);
+      border-radius: 6px;
       cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
       transition: all 0.2s ease;
     }
-    .spot:hover { background: rgba(99, 102, 241, 0.15); transform: translate(-50%, -50%) scale(1.02); }
-    .spot.assigned { border-style: solid; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
     .spot img { max-width: 90%; max-height: 90%; object-fit: contain; pointer-events: none; }
+    .spot.assigned { border-style: solid; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
     
-    .spot-placeholder { width: 24px; height: 24px; border: 2px solid var(--accent-color); border-radius: 50%; position: relative; }
+    .spot-placeholder { width: 20px; height: 20px; border: 2px solid var(--accent-color); border-radius: 50%; position: relative; }
     .spot-placeholder::before, .spot-placeholder::after { content: ''; position: absolute; background: var(--accent-color); }
-    .spot-placeholder::before { top: 3px; bottom: 3px; left: 9px; width: 2px; }
-    .spot-placeholder::after { left: 3px; right: 3px; top: 9px; height: 2px; }
+    .spot-placeholder::before { top: 3px; bottom: 3px; left: 7px; width: 2px; }
+    .spot-placeholder::after { left: 3px; right: 3px; top: 7px; height: 2px; }
     
-    .spot-order { position: absolute; top: -10px; left: -10px; background: var(--accent-color); color: white; font-size: 11px; font-weight: bold; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .spot-order { position: absolute; top: -8px; left: -8px; background: var(--accent-color); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
 
-    /* Bottom Control Tray */
-    .control-tray { background: var(--panel-bg); border-top: 1px solid var(--border-color); padding: 15px 20px; display: flex; flex-direction: column; gap: 12px; }
-    .tray-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-muted); }
+    /* Mobile-First Control Panel Layout */
+    .control-tray { background: var(--panel-bg); border-top: 1px solid var(--border-color); padding: 12px 15px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .tray-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); }
     .tray-meta strong { color: var(--text-main); }
     
-    .tray-scroller { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 5px; align-items: center; }
-    .thumb { width: 70px; height: 70px; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
+    .tray-scroller { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; align-items: center; -webkit-overflow-scrolling: touch; }
+    .thumb { width: 55px; height: 55px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .thumb img { max-width: 90%; max-height: 90%; object-fit: contain; }
     
-    .add-btn-wrapper { flex-shrink: 0; }
-    .file-input-label { display: flex; width: 70px; height: 70px; border-radius: 8px; border: 2px dashed var(--text-muted); justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); font-size: 1.5rem; transition: all 0.2s; }
-    .file-input-label:hover { border-color: var(--accent-color); color: var(--accent-color); background: rgba(99,102,241,0.02); }
+    .file-input-label { display: flex; width: 55px; height: 55px; border-radius: 6px; border: 2px dashed var(--text-muted); justify-content: center; align-items: center; cursor: pointer; color: var(--text-muted); font-size: 1.3rem; }
     
-    .action-row { display: flex; gap: 15px; align-items: center; margin-top: 5px; }
-    .settings-pill { display: flex; gap: 15px; background: var(--bg-main); padding: 8px 15px; border-radius: 30px; border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); flex: 1; overflow-x: auto; }
-    .setting-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
-    .setting-item input[type="range"] { width: 70px; accent-color: var(--accent-color); cursor: pointer; }
-    
-    #play-btn { padding: 12px 30px; font-size: 1rem; border-radius: 30px; opacity: 0.6; pointer-events: none; }
+    /* Vertically Stacked Settings for Mobile Touch Reliability */
+    .action-row { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .settings-pill { display: flex; flex-direction: column; gap: 8px; background: var(--bg-main); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 0.8rem; color: var(--text-muted); width: 100%; }
+    .setting-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+    .setting-item span:first-child { width: 90px; font-weight: 500; color: var(--text-main); }
+    .setting-item span:last-child { width: 45px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .setting-item input[type="range"] { flex: 1; accent-color: var(--accent-color); cursor: pointer; height: 24px; }
+
+    #play-btn { width: 100%; padding: 12px; font-size: 0.95rem; border-radius: 25px; opacity: 0.5; pointer-events: none; }
     #play-btn.ready { opacity: 1; pointer-events: auto; }
 
-    /* Modals System */
+    /* Desktop Adjustments */
+    @media(min-width: 600px) {
+      .action-row { flex-direction: row; align-items: center; }
+      .settings-pill { flex-direction: row; gap: 20px; flex: 1; }
+      #play-btn { width: auto; padding: 12px 25px; }
+    }
+
+    /* Modal Layouts */
     .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.4); display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 100; backdrop-filter: blur(2px); }
     .modal-backdrop.open { opacity: 1; pointer-events: auto; }
-    .modal-box { background: var(--panel-bg); padding: 24px; border-radius: 16px; width: 90%; max-width: 450px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: translateY(15px); transition: transform 0.2s ease; }
+    .modal-box { background: var(--panel-bg); padding: 20px; border-radius: 14px; width: 92%; max-width: 420px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: translateY(10px); transition: transform 0.2s ease; }
     .modal-backdrop.open .modal-box { transform: translateY(0); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    .modal-header h4 { font-size: 1.1rem; font-weight: 700; }
-    .close-modal-btn { background: none; border: none; font-size: 1.3rem; color: var(--text-muted); cursor: pointer; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-header h4 { font-size: 1rem; font-weight: 700; }
+    .close-modal-btn { background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; padding: 0 5px; }
     
-    .grid-select { display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
-    .layout-opt { padding: 12px 16px; border: 1px solid var(--border-color); border-radius: 10px; background: none; text-align: left; cursor: pointer; transition: all 0.15s; }
-    .layout-opt:hover { border-color: var(--accent-color); background: rgba(99,102,241,0.02); }
-    .lo-label { font-weight: 600; margin-bottom: 2px; font-size: 0.95rem; }
+    .grid-select { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+    .layout-opt { padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px; background: none; text-align: left; cursor: pointer; }
+    .lo-label { font-weight: 600; margin-bottom: 2px; font-size: 0.9rem; }
     
-    .picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-height: 280px; overflow-y: auto; }
-    .picker-item { border: 1px solid var(--border-color); border-radius: 8px; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #fff; transition: all 0.15s; padding: 6px; }
-    .picker-item:hover { border-color: var(--accent-color); transform: scale(1.04); }
+    .picker-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; }
+    .picker-item { border: 1px solid var(--border-color); border-radius: 6px; aspect-ratio: 1; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #fff; padding: 4px; }
     .picker-item img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .picker-empty { grid-column: span 4; text-align: center; color: var(--text-muted); padding: 30px 10px; font-size: 0.9rem; line-height: 1.4; }
+    .picker-empty { grid-column: span 4; text-align: center; color: var(--text-muted); padding: 25px 5px; font-size: 0.85rem; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand">Whiteboard Sequence Engine</div>
+    <div class="brand">Sequence Engine</div>
     <div class="top-actions">
-      <span id="layout-label" style="font-size: 0.85rem; font-weight:600; color:var(--text-muted)">No Layout</span>
-      <button class="btn btn-primary" onclick="openModal('layout-modal')">🗺️ Change Layout</button>
+      <span id="layout-label" style="font-size: 0.8rem; font-weight:600; color:var(--text-muted)">No Layout</span>
+      <button class="btn btn-primary" onclick="openModal('layout-modal')">🗺️ Grid</button>
       <button id="stop-btn" class="btn btn-danger" onclick="stopAnimation()">🛑 Stop</button>
     </div>
   </header>
@@ -134,7 +145,7 @@
   <div class="workspace">
     <div id="empty-state">
       <h3>No Drawing Space Selected</h3>
-      <p>Click "Change Layout" above to map out your whiteboard targets.</p>
+      <p>Click "Grid" above to map out your whiteboard layout targets.</p>
     </div>
 
     <div id="canvas-container">
@@ -146,12 +157,10 @@
   <div class="control-tray">
     <div class="tray-meta">
       <div>Asset Storage: <strong id="img-count">0 images</strong></div>
-      <div>Upload transparent line-art png sketches for crisp results</div>
     </div>
 
     <div class="tray-scroller">
-      <div id="thumbs" style="display:flex; gap:12px; align-items:center;">
-        </div>
+      <div id="thumbs" style="display:flex; gap:10px; align-items:center;"></div>
       <div class="add-btn-wrapper" id="add-btn">
         <label class="file-input-label">
           +
@@ -163,7 +172,7 @@
     <div class="action-row">
       <div class="settings-pill">
         <div class="setting-item">
-          <span>Draw Time:</span>
+          <span>Draw Speed:</span>
           <input type="range" id="sl-duration" min="1" max="12" step="0.5" value="4" oninput="updateSlider('duration')">
           <span id="val-duration">4s</span>
         </div>
@@ -173,13 +182,13 @@
           <span id="val-thickness">2.5px</span>
         </div>
         <div class="setting-item">
-          <span>Darkness Threshold:</span>
+          <span>Threshold:</span>
           <input type="range" id="sl-darkness" min="40" max="220" step="5" value="135" oninput="updateSlider('darkness')">
           <span id="val-darkness">135</span>
         </div>
       </div>
 
-      <button id="play-btn" class="btn btn-primary" onclick="playAnimation()">▶ Play Canvas Video</button>
+      <button id="play-btn" class="btn btn-primary" onclick="playAnimation()">▶ Play Sequences</button>
     </div>
   </div>
 
@@ -189,8 +198,7 @@
         <h4>Select Sequence Layout Grid</h4>
         <button class="close-modal-btn" onclick="closeModal('layout-modal')">&times;</button>
       </div>
-      <div class="grid-select" id="layout-grid">
-        </div>
+      <div class="grid-select" id="layout-grid"></div>
     </div>
   </div>
 
@@ -200,13 +208,11 @@
         <h4>Assign Sketch Asset to Route</h4>
         <button class="close-modal-btn" onclick="closeModal('picker-modal')">&times;</button>
       </div>
-      <div class="picker-grid" id="picker-grid">
-        </div>
+      <div class="picker-grid" id="picker-grid"></div>
     </div>
   </div>
 
   <script>
-    // ---- Core Execution Variables ----
     let uploadedImages = []; 
     let currentLayout = null;
     let assignedOrderCounter = 1;
@@ -219,26 +225,11 @@
 
     const settings = { thickness: 2.5, darkness: 135, duration: 4, handSize: 220 };
 
-    // Safe encoding-proof SVG configuration
-    const HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="overflow:visible">
-      <g>
-        <path d="M120 400 L350 120 L370 135 L140 415 Z" fill="#2C3E50"/>
-        <path d="M120 400 L140 415 L90 450 Z" fill="#E0C097"/>
-        <path d="M280 350 C 350 300,450 400,480 600" stroke="#F5D0C5" stroke-width="130" stroke-linecap="round"/>
-        <path d="M200 340 C 250 380,320 320,310 270" stroke="#F5D0C5" stroke-width="60" stroke-linecap="round" fill="none"/>
-        <ellipse cx="305" cy="275" rx="18" ry="22" transform="rotate(-20 305 275)" fill="#FFC1CC"/>
-        <path d="M150 300 C 180 280,260 180,360 210" stroke="#F5D0C5" stroke-width="55" stroke-linecap="round" fill="none"/>
-        <ellipse cx="355" cy="210" rx="18" ry="22" transform="rotate(70 355 210)" fill="#FFC1CC"/>
-        <path d="M220 380 C 260 360,280 320,260 240" stroke="#F5D0C5" stroke-width="55" stroke-linecap="round" fill="none"/>
-        <ellipse cx="260" cy="245" rx="16" ry="20" transform="rotate(-10 260 245)" fill="#FFC1CC"/>
-        <path d="M400 450 L650 650 L350 750 Z" fill="#2C3E50"/>
-      </g>
-    </svg>`;
+    const HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="overflow:visible"><g><path d="M120 400 L350 120 L370 135 L140 415 Z" fill="#2C3E50"/><path d="M120 400 L140 415 L90 450 Z" fill="#E0C097"/><path d="M280 350 C 350 300,450 400,480 600" stroke="#F5D0C5" stroke-width="130" stroke-linecap="round"/><path d="M200 340 C 250 380,320 320,310 270" stroke="#F5D0C5" stroke-width="60" stroke-linecap="round" fill="none"/><ellipse cx="305" cy="275" rx="18" ry="22" transform="rotate(-20 305 275)" fill="#FFC1CC"/><path d="M150 300 C 180 280,260 180,360 210" stroke="#F5D0C5" stroke-width="55" stroke-linecap="round" fill="none"/><ellipse cx="355" cy="210" rx="18" ry="22" transform="rotate(70 355 210)" fill="#FFC1CC"/><path d="M220 380 C 260 360,280 320,260 240" stroke="#F5D0C5" stroke-width="55" stroke-linecap="round" fill="none"/><ellipse cx="260" cy="245" rx="16" ry="20" transform="rotate(-10 260 245)" fill="#FFC1CC"/><path d="M400 450 L650 650 L350 750 Z" fill="#2C3E50"/></g></svg>`;
     const hImg = new Image();
     hImg.onload = () => { handImg = hImg; };
     hImg.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(HAND_SVG);
 
-    // Clean Layout Matrix mapping proportional bounding spaces
     const layouts = {
       '1x1': { label: '1 Center Box', dots: [{x: 0.5, y: 0.5, w: 0.45, h: 0.75}] },
       '2x1': { label: '2×1 Split Row', dots: [{x: 0.26, y: 0.5, w: 0.38, h: 0.65}, {x: 0.74, y: 0.5, w: 0.38, h: 0.65}] },
@@ -265,7 +256,6 @@
       ]}
     };
 
-    // ---- App Entry Orchestration ----
     function initApp() {
       const g = document.getElementById('layout-grid');
       g.innerHTML = '';
@@ -383,7 +373,7 @@
       grid.innerHTML = '';
       
       if (uploadedImages.length === 0) {
-        grid.innerHTML = `<div class="picker-empty">Asset storage empty.<br>Upload images at the bottom bar first!</div>`;
+        grid.innerHTML = `<div class="picker-empty">Asset storage empty.<br>Upload images first!</div>`;
       } else {
         uploadedImages.forEach(img => {
           const item = document.createElement('div');
@@ -418,7 +408,7 @@
         btn.textContent = `▶ Play Sequences (${assignedCount} Routed)`;
       } else {
         btn.classList.remove('ready');
-        btn.textContent = `▶ Play Canvas Video`;
+        btn.textContent = `▶ Play Sequences`;
       }
     }
 
@@ -472,7 +462,7 @@
         while (rawPoints.length > 0) {
           let nearestIdx = 0;
           let minDist = Infinity;
-          const maxSearch = Math.min(rawPoints.length, 150); 
+          const maxSearch = Math.min(rawPoints.length, 300); 
           for (let i = 0; i < maxSearch; i++) {
             const dx = rawPoints[i].relX - current.relX;
             const dy = rawPoints[i].relY - current.relY;
@@ -521,11 +511,9 @@
       });
     }
 
-    // ---- ADVANCED UNIFIED OFFSCREEN CANVAS DRAWING SYSTEM ----
     function startSequencePlayback(sequence, canvas, ctx) {
       let sequenceIndex = 0;
       
-      // 1. Setup a clean, hidden buffer canvas that contains NO hands
       const offscreenCanvas = document.createElement('canvas');
       offscreenCanvas.width = canvas.width;
       offscreenCanvas.height = canvas.height;
@@ -539,7 +527,6 @@
       
       let startX = 0, startY = 0, targetW = 0, targetH = 0;
       
-      // Kinetic Hand positioning system for tracking clean zips between spots
       let handX = canvas.width / 2;
       let handY = canvas.height / 2;
       let targetHandX = 0;
@@ -547,15 +534,12 @@
       
       let isTransitioning = false;
       let transitionFrameCount = 0;
-      const totalTransitionFrames = 25; // Speed of the hand gliding to the next spot
+      const totalTransitionFrames = 20; 
 
       function prepareNextImageStep() {
         if (sequenceIndex >= sequence.length || stopFlag) {
-          if (!stopFlag) {
-            // End animation smoothly and remove hand
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(offscreenCanvas, 0, 0);
-          }
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(offscreenCanvas, 0, 0);
           isPlaying = false;
           document.getElementById('stop-btn').style.display = 'none';
           document.getElementById('spots-overlay').style.display = 'block';
@@ -584,7 +568,6 @@
           targetHandY = startY;
         }
 
-        // Hand transitions smoothly between layout boxes instead of teleporting or multiplying
         if (sequenceIndex === 0) {
           handX = targetHandX;
           handY = targetHandY;
@@ -600,11 +583,12 @@
       function engineFrameLoop() {
         if (stopFlag) return;
 
+        let renderHand = true;
+
         if (isTransitioning) {
-          // Smooth interpolation physics loop to slide hand over to the next sketch coordinate
           transitionFrameCount++;
-          handX = handX + (targetHandX - handX) * 0.22;
-          handY = handY + (targetHandY - handY) * 0.22;
+          handX = handX + (targetHandX - handX) * 0.25;
+          handY = handY + (targetHandY - handY) * 0.25;
 
           if (transitionFrameCount >= totalTransitionFrames || (Math.abs(handX - targetHandX) < 1 && Math.abs(handY - targetHandY) < 1)) {
             handX = targetHandX;
@@ -612,7 +596,6 @@
             isTransitioning = false;
           }
         } else {
-          // Draw standard line strokes directly onto the hidden offscreen buffer
           if (currentPoints.length > 0 && currentPointsIndex < currentPoints.length) {
             oCtx.strokeStyle = '#111827';
             oCtx.lineWidth = settings.thickness;
@@ -627,37 +610,37 @@
               const ptX = startX + (currentPoints[i].relX * targetW);
               const ptY = startY + (currentPoints[i].relY * targetH);
               
-              if (i === loopStart || (Math.abs(currentPoints[i].relX - currentPoints[i-1].relX) > 0.15 || Math.abs(currentPoints[i].relY - currentPoints[i-1].relY) > 0.15)) {
+              /* FIX: If two coordinates are far apart, lift the marker up (moveTo) instead of drawing a line across gaps */
+              if (i === loopStart || Math.abs(currentPoints[i].relX - currentPoints[i-1].relX) > 0.03 || Math.abs(currentPoints[i].relY - currentPoints[i-1].relY) > 0.03) {
                 oCtx.moveTo(ptX, ptY);
               } else {
                 oCtx.lineTo(ptX, ptY);
               }
               
-              // Lock hand coordinates perfectly onto the tip of the drawing stroke
               handX = ptX;
               handY = ptY;
             }
             oCtx.stroke();
             currentPointsIndex = limit;
           } else {
-            // Image completely sketched! Trigger slide down to the next queue item
             sequenceIndex++;
             prepareNextImageStep();
+            if (sequenceIndex >= sequence.length) {
+              renderHand = false;
+            }
           }
         }
 
-        // 2. Clear real monitor canvas and print clean drawings from the buffer
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(offscreenCanvas, 0, 0);
 
-        // 3. Draw EXACTLY ONE active drawing hand over the scene
-        if (handImg && !isTransitioning && currentPointsIndex === 0 && sequenceIndex >= sequence.length) {
-           // Stop conditions met
-        } else if (handImg) {
+        if (handImg && renderHand && isPlaying) {
           ctx.drawImage(handImg, handX - 65, handY - 215, settings.handSize, settings.handSize);
         }
 
-        animRaf = requestAnimationFrame(engineFrameLoop);
+        if (isPlaying) {
+          animRaf = requestAnimationFrame(engineFrameLoop);
+        }
       }
       
       animRaf = requestAnimationFrame(engineFrameLoop);
