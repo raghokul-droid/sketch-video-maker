@@ -374,4 +374,240 @@ function updatePlayButton() {
     btn.textContent = `▶ Play Layout (${assignedCount} Assigned)`;
   } else {
     btn.classList.remove('ready');
- 
+    btn.textContent = `▶ Play Video`;
+  }
+}
+
+// ---- Drawing Engine Core ----
+function stopAnimation() {
+  stopFlag = true;
+  if (animRaf) cancelAnimationFrame(animRaf);
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('spots-overlay').style.display = 'block';
+}
+
+function processImagePoints(imgElement, targetW, targetH) {
+  const canvasOff = document.createElement('canvas');
+  canvasOff.width = 300; 
+  canvasOff.height = Math.floor(300 * (targetH / targetW));
+  const ctxOff = canvasOff.getContext('2d');
+  ctxOff.fillStyle = 'white';
+  ctxOff.fillRect(0, 0, canvasOff.width, canvasOff.height);
+  
+  // Fit image proportionally
+  const imgAspect = imgElement.width / imgElement.height;
+  const canvasAspect = canvasOff.width / canvasOff.height;
+  let drawW = canvasOff.width, drawH = canvasOff.height, xOffset = 0, yOffset = 0;
+  
+  if (imgAspect > canvasAspect) {
+    drawH = canvasOff.width / imgAspect;
+    yOffset = (canvasOff.height - drawH) / 2;
+  } else {
+    drawW = canvasOff.height * imgAspect;
+    xOffset = (canvasOff.width - drawW) / 2;
+  }
+  
+  ctxOff.drawImage(imgElement, xOffset, yOffset, drawW, drawH);
+  const imgData = ctxOff.getImageData(0, 0, canvasOff.width, canvasOff.height);
+  const data = imgData.data;
+  
+  let rawPoints = [];
+  for (let y = 0; y < canvasOff.height; y++) {
+    for (let x = 0; x < canvasOff.width; x++) {
+      const idx = (y * canvasOff.width + x) * 4;
+      const brightness = (data[idx] + data[idx+1] + data[idx+2]) / 3;
+      if (brightness < settings.darkness) {
+        // Map downscale coordinates back up to layout box spacing sizes
+        rawPoints.push({
+          relX: x / canvasOff.width,
+          relY: y / canvasOff.height
+        });
+      }
+    }
+  }
+  
+  // Sort spatially so lines look like consecutive natural strokes
+  let sortedPoints = [];
+  if (rawPoints.length > 0) {
+    let current = rawPoints.shift();
+    sortedPoints.push(current);
+    while (rawPoints.length > 0) {
+      let nearestIdx = 0;
+      let minDist = Infinity;
+      // Sampling window check to keep execution ultra fast
+      const maxSearch = Math.min(rawPoints.length, 120); 
+      for (let i = 0; i < maxSearch; i++) {
+        const dx = rawPoints[i].relX - current.relX;
+        const dy = rawPoints[i].relY - current.relY;
+        const d = dx*dx + dy*dy;
+        if (d < minDist) { minDist = d; nearestIdx = i; }
+      }
+      current = rawPoints.splice(nearestIdx, 1)[0];
+      sortedPoints.push(current);
+    }
+  }
+  return sortedPoints;
+}
+
+function playAnimation() {
+  const sequence = Object.entries(spotAssignments).map(([spotIndex, data]) => ({
+    spotIndex: parseInt(spotIndex),
+    imageId: data.imageId,
+    order: data.order
+  })).sort((a, b) => a.order - b.order);
+  
+  if (sequence.length === 0) return;
+
+  stopFlag = false;
+  document.getElementById('spots-overlay').style.display = 'none';
+  document.getElementById('stop-btn').style.display = 'block';
+
+  const canvas = document.getElementById('output-canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // Clear frame base canvas to clean white
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Pre-cache actual HTML Image Elements to process bitmap data arrays
+  let loadedCount = 0;
+  sequence.forEach((item) => {
+    const rawImgData = uploadedImages.find(img => img.id === item.imageId);
+    const nativeImg = new Image();
+    nativeImg.src = rawImgData.src;
+    nativeImg.onload = () => {
+      item.imgElement = nativeImg;
+      loadedCount++;
+      if (loadedCount === sequence.length) {
+        startSequencePlayback(sequence, canvas, ctx);
+      }
+    };
+  });
+}
+
+function startSequencePlayback(sequence, canvas, ctx) {
+  let sequenceIndex = 0;
+  
+  function nextImageStep() {
+    if (sequenceIndex >= sequence.length || stopFlag) {
+      // Finished all spots drawing sequence! Clean final display render frame
+      if(!stopFlag) {
+        renderStaticStateWithNoHand(sequence, canvas, ctx);
+      }
+      document.getElementById('stop-btn').style.display = 'none';
+      document.getElementById('spots-overlay').style.display = 'block';
+      return;
+    }
+
+    const currentItem = sequence[sequenceIndex];
+    const dotSpec = layouts[currentLayout].dots[currentItem.spotIndex];
+    
+    // Transform layout bounds to matching 1920x1080 resolution coordinates
+    const targetBoxSize = (dotSpec.size / 100) * 1400; // Normalized safe fitting size metric
+    const startX = (dotSpec.x * canvas.width) - (targetBoxSize / 2);
+    const startY = (dotSpec.y * canvas.height) - (targetBoxSize / 2);
+
+    const points = processImagePoints(currentItem.imgElement, targetBoxSize, targetBoxSize);
+    
+    let pointsIndex = 0;
+    const totalDurationMs = settings.duration * 1000;
+    const fpsInterval = 1000 / 60;
+    const totalFrames = totalDurationMs / fpsInterval;
+    const pointsPerFrame = Math.max(1, Math.ceil(points.length / totalFrames));
+
+    // Save previous canvas frame cache to cleanly clear/draw hand frame instances
+    const baseSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    function frameLoop() {
+      if (stopFlag) return;
+
+      if (pointsIndex >= points.length) {
+        // Current image finish sketching, progress to subsequent assignment spot
+        sequenceIndex++;
+        setTimeout(nextImageStep, 300);
+        return;
+      }
+
+      // Restoring background canvas line progress
+      ctx.putImageData(baseSnapshot, 0, 0);
+
+      // Append new lines to current point tracking
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = settings.thickness;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      const limit = Math.min(pointsIndex + pointsPerFrame, points.length);
+      
+      // Draw path sequence history
+      ctx.beginPath();
+      for (let i = 0; i < limit; i++) {
+        const ptX = startX + (points[i].relX * targetBoxSize);
+        const ptY = startY + (points[i].relY * targetBoxSize);
+        if (i === 0 || (i > 0 && Math.abs(points[i].relX - points[i-1].relX) > 0.1)) {
+          ctx.moveTo(ptX, ptY);
+        } else {
+          ctx.lineTo(ptX, ptY);
+        }
+      }
+      ctx.stroke();
+
+      // Overwrite base snapshot cache with newly extended lines drawn
+      const updatedSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Draw the interactive floating hand overlay at current pen tip index target
+      if (handImg && limit > 0) {
+        const tipX = startX + (points[limit - 1].relX * targetBoxSize);
+        const tipY = startY + (points[limit - 1].relY * targetBoxSize);
+        // Offset hand coordinates to place pen edge accurately on target ink pixels
+        ctx.drawImage(handImg, tipX - 65, tipY - 215, settings.handSize, settings.handSize);
+      }
+
+      // Commit tracking steps forward
+      pointsIndex = limit;
+      baseSnapshot.data.set(updatedSnapshot.data);
+
+      animRaf = requestAnimationFrame(frameLoop);
+    }
+
+    frameLoop();
+  }
+
+  nextImageStep();
+}
+
+function renderStaticStateWithNoHand(sequence, canvas, ctx) {
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  sequence.forEach((currentItem) => {
+    const dotSpec = layouts[currentLayout].dots[currentItem.spotIndex];
+    const targetBoxSize = (dotSpec.size / 100) * 1400;
+    const startX = (dotSpec.x * canvas.width) - (targetBoxSize / 2);
+    const startY = (dotSpec.y * canvas.height) - (targetBoxSize / 2);
+    
+    const points = processImagePoints(currentItem.imgElement, targetBoxSize, targetBoxSize);
+    
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = settings.thickness;
+    ctx.lineCap = 'round';
+    
+    ctx.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      const ptX = startX + (points[i].relX * targetBoxSize);
+      const ptY = startY + (points[i].relY * targetBoxSize);
+      if (i === 0 || (i > 0 && Math.abs(points[i].relX - points[i-1].relX) > 0.1)) {
+        ctx.moveTo(ptX, ptY);
+      } else {
+        ctx.lineTo(ptX, ptY);
+      }
+    }
+    ctx.stroke();
+  });
+}
+
+// Boot setup listeners
+initApp();
+</script>
+</body>
+</html>
