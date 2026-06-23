@@ -303,52 +303,44 @@ function drawSpots() {
   });
 }
 
-// Handle taps on spot canvas
-spotCanvas.addEventListener('click', (e) => {
+// Shared tap handler — uses full cell rectangle for hit detection
+function handleSpotTap(clientX, clientY) {
   if(images.length === 0) { alert('Please upload images first!'); return; }
   const rect = spotCanvas.getBoundingClientRect();
-  // Scale click coords to canvas space
-  const scaleX = CW / rect.width;
-  const scaleY = CH / rect.height;
-  const mx = (e.clientX - rect.left) * scaleX;
-  const my = (e.clientY - rect.top) * scaleY;
-
+  const canvasAspect = CW / CH;
+  const rectAspect = rect.width / rect.height;
+  let renderedW, renderedH, offsetX, offsetY;
+  if(rectAspect > canvasAspect) {
+    renderedH = rect.height; renderedW = rect.height * canvasAspect;
+    offsetX = rect.left + (rect.width - renderedW) / 2; offsetY = rect.top;
+  } else {
+    renderedW = rect.width; renderedH = rect.width / canvasAspect;
+    offsetX = rect.left; offsetY = rect.top + (rect.height - renderedH) / 2;
+  }
+  const scaleX = CW / renderedW;
+  const scaleY = CH / renderedH;
+  const mx = (clientX - offsetX) * scaleX;
+  const my = (clientY - offsetY) * scaleY;
   const cells = getCells();
+  let bestIdx = -1, bestDist = Infinity;
   for(let i=0; i<cells.length; i++) {
     const cell = cells[i];
     const cx = cell.x + cell.w/2;
     const cy = cell.y + cell.h/2;
-    const r = Math.min(cell.w, cell.h) * 0.38;
-    const dist = Math.sqrt((mx-cx)**2 + (my-cy)**2);
-    if(dist <= r) {
-      openImagePicker(i);
-      return;
+    const pad = 60;
+    if(mx >= cell.x-pad && mx <= cell.x+cell.w+pad && my >= cell.y-pad && my <= cell.y+cell.h+pad) {
+      const dist = Math.sqrt((mx-cx)**2 + (my-cy)**2);
+      if(dist < bestDist) { bestDist=dist; bestIdx=i; }
     }
   }
-});
+  if(bestIdx >= 0) openImagePicker(bestIdx);
+}
 
-// Also handle touch
+spotCanvas.addEventListener('click', (e) => handleSpotTap(e.clientX, e.clientY));
 spotCanvas.addEventListener('touchend', (e) => {
   e.preventDefault();
-  const touch = e.changedTouches[0];
-  const rect = spotCanvas.getBoundingClientRect();
-  const scaleX = CW / rect.width;
-  const scaleY = CH / rect.height;
-  const mx = (touch.clientX - rect.left) * scaleX;
-  const my = (touch.clientY - rect.top) * scaleY;
-
-  const cells = getCells();
-  for(let i=0; i<cells.length; i++) {
-    const cell = cells[i];
-    const cx = cell.x + cell.w/2;
-    const cy = cell.y + cell.h/2;
-    const r = Math.min(cell.w, cell.h) * 0.38;
-    const dist = Math.sqrt((mx-cx)**2 + (my-cy)**2);
-    if(dist <= r) {
-      openImagePicker(i);
-      return;
-    }
-  }
+  const t = e.changedTouches[0];
+  handleSpotTap(t.clientX, t.clientY);
 }, { passive: false });
 
 // ---- Image Picker ----
@@ -664,3 +656,4 @@ drawSpots();
 </script>
 </body>
 </html>
+
