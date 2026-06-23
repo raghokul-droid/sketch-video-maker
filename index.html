@@ -8,101 +8,106 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #060a12; color: #e2e8f0; font-family: system-ui, sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
   #app { display: flex; flex-direction: column; height: 100dvh; }
-  #canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; background: #000; position: relative; overflow: hidden; }
-  #output-canvas { width: 100%; height: 100%; object-fit: contain; background: white; display: none; }
   
-  /* Spots Overlay System */
-  #spots-overlay { position: absolute; inset: 0; pointer-events: none; display: none; }
-  .spot { position: absolute; border: 2px dashed rgba(99,102,241,0.6); background: rgba(99,102,241,0.1); border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; transition: all 0.2s; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-  .spot:hover { border-style: solid; background: rgba(99,102,241,0.3); transform: translate(-50%, -50%) scale(1.05); }
-  .spot.assigned { border: 2px solid #6366f1; background: #0f172a; border-radius: 12px; }
-  .spot img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
-  .spot-order { position: absolute; top: -10px; right: -10px; background: #6366f1; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-  .spot-placeholder { width: 16px; height: 16px; background: #6366f1; border-radius: 50%; }
+  /* Flex Canvas Container with true alignment mapping */
+  #canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; background: #0d1321; position: relative; overflow: hidden; padding: 16px; }
+  
+  #canvas-container { position: relative; width: 100%; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; background: white; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.6); border-radius: 6px; overflow: hidden; }
+  #output-canvas { width: 100%; height: 100%; display: block; }
+  
+  /* Absolute Grid Matching System */
+  #spots-overlay { position: absolute; inset: 0; pointer-events: none; }
+  .spot { position: absolute; border: 2px dashed rgba(99,102,241,0.6); background: rgba(99,102,241,0.08); transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+  .spot:hover { border-style: solid; background: rgba(99,102,241,0.2); transform: translate(-50%, -50%) scale(1.03); }
+  .spot.assigned { border: 2px solid #6366f1; background: #0f172a; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .spot img { width: 100%; height: 100%; object-fit: contain; padding: 6px; }
+  
+  .spot-order { position: absolute; top: -10px; right: -10px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+  .spot-placeholder { width: 14px; height: 14px; background: #6366f1; border-radius: 50%; box-shadow: 0 0 8px #6366f1; }
 
-  #empty-state { text-align: center; padding: 36px 28px; border: 1px solid rgba(99,102,241,0.25); border-radius: 20px; background: rgba(15,23,42,0.9); max-width: 340px; width: 90%; z-index: 10; }
-  #empty-state h2 { font-size: 22px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; }
+  #empty-state { text-align: center; padding: 36px 24px; border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; background: rgba(15,23,42,0.9); max-width: 340px; width: 90%; z-index: 10; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+  #empty-state h2 { font-size: 20px; font-weight: 800; color: #f1f5f9; margin-bottom: 8px; }
   #empty-state p { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; width: 100%; margin-bottom: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; padding: 13px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; width: 100%; }
   .btn-primary { background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; box-shadow: 0 4px 20px rgba(99,102,241,0.3); }
   
-  #bottom-bar { background: rgba(10,15,28,0.98); border-top: 1px solid rgba(99,102,241,0.12); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; z-index: 20; }
+  #bottom-bar { background: #090d16; border-top: 1px solid rgba(99,102,241,0.12); padding: 14px; display: flex; flex-direction: column; gap: 12px; z-index: 20; }
   #info-bar { display: flex; align-items: center; justify-content: space-between; }
-  #info-text { font-size: 12px; color: #64748b; font-weight: 600; }
-  #layout-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.25); border-radius: 8px; color: #a5b4fc; font-size: 12px; font-weight: 600; cursor: pointer; }
+  #info-text { font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  #layout-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.25); border-radius: 8px; color: #a5b4fc; font-size: 12px; font-weight: 700; cursor: pointer; }
   
-  #thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; min-height: 56px; }
-  #thumbs::-webkit-scrollbar { height: 3px; } #thumbs::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 2px; }
-  .thumb { position: relative; width: 52px; height: 52px; flex-shrink: 0; border-radius: 9px; overflow: hidden; border: 1.5px solid rgba(99,102,241,0.4); background: #0f172a; }
-  .thumb img { width: 100%; height: 100%; object-fit: cover; background: white; display: block; }
+  #thumbs { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; min-height: 58px; align-items: center; }
+  #thumbs::-webkit-scrollbar { height: 4px; } #thumbs::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 2px; }
+  .thumb { position: relative; width: 50px; height: 50px; flex-shrink: 0; border-radius: 8px; overflow: hidden; border: 1.5px solid rgba(99,102,241,0.3); background: #1e293b; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; background: white; }
   
-  #add-btn { width: 52px; height: 52px; flex-shrink: 0; border-radius: 9px; border: 1px dashed rgba(99,102,241,0.35); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: rgba(99,102,241,0.05); gap: 2px; font-size: 9px; color: #6366f1; font-weight: 700; }
-  #action-row { display: flex; gap: 10px; align-items: center; }
-  #settings-btn { padding: 12px; background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.15); border-radius: 12px; cursor: pointer; font-size: 18px; }
-  #play-btn { flex: 1; padding: 13px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; box-shadow: 0 4px 24px rgba(99,102,241,0.35); opacity: 0.5; pointer-events: none; transition: opacity 0.3s; }
-  #play-btn.ready { opacity: 1; pointer-events: auto; }
-  #stop-btn { position: absolute; top: 16px; right: 16px; padding: 8px 16px; background: rgba(220,38,38,0.9); color: white; border-radius: 100px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; display: none; z-index: 50; }
+  #add-btn { width: 50px; height: 50px; flex-shrink: 0; border-radius: 8px; border: 1px dashed rgba(99,102,241,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: rgba(99,102,241,0.03); gap: 2px; font-size: 9px; color: #818cf8; font-weight: 700; }
+  #action-row { display: flex; gap: 12px; align-items: center; }
+  #settings-btn { padding: 13px 16px; background: #1e293b; border: 1px solid rgba(99,102,241,0.15); border-radius: 12px; cursor: pointer; font-size: 16px; color: #f1f5f9; }
+  #play-btn { flex: 1; padding: 14px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; opacity: 0.4; pointer-events: none; transition: all 0.2s; }
+  #play-btn.ready { opacity: 1; pointer-events: auto; box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+  #stop-btn { position: absolute; top: 16px; right: 16px; padding: 10px 20px; background: #ef4444; color: white; border-radius: 30px; font-weight: 700; font-size: 12px; border: none; cursor: pointer; display: none; z-index: 50; box-shadow: 0 4px 15px rgba(239,68,68,0.4); }
 
-  /* Modals */
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  /* Modals Layout UI */
+  .modal-bg { position: fixed; inset: 0; background: rgba(4,6,10,0.85); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
   .modal-bg.open { display: flex; }
-  .modal { background: linear-gradient(145deg,#0f172a,#0a0f1e); border: 1px solid rgba(99,102,241,0.22); border-radius: 20px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; box-shadow: 0 25px 80px rgba(0,0,0,0.6); }
-  .modal h3 { font-size: 17px; font-weight: 800; color: #f1f5f9; margin-bottom: 16px; }
-  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .close-btn { width: 30px; height: 30px; border-radius: 8px; background: rgba(30,41,59,0.8); border: 1px solid rgba(99,102,241,0.15); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: #64748b; }
+  .modal { background: #0f172a; border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
+  .modal h3 { font-size: 16px; font-weight: 800; color: #f1f5f9; }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .close-btn { width: 28px; height: 28px; border-radius: 6px; background: #1e293b; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: #94a3b8; }
   
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .layout-opt { padding: 12px; border-radius: 10px; border: 1.5px solid rgba(99,102,241,0.15); background: rgba(15,23,42,0.6); cursor: pointer; text-align: left; }
-  .layout-opt.active { border-color: #6366f1; background: rgba(99,102,241,0.15); }
-  .layout-opt .lo-label { font-size: 13px; font-weight: 800; color: #f1f5f9; margin-bottom: 3px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .layout-opt { padding: 14px; border-radius: 12px; border: 1.5px solid #1e293b; background: #111827; cursor: pointer; text-align: left; transition: all 0.2s; }
+  .layout-opt:hover { border-color: rgba(99,102,241,0.4); }
+  .layout-opt .lo-label { font-size: 13px; font-weight: 700; color: #f1f5f9; margin-bottom: 2px; }
 
-  /* Sliders */
-  .slider-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  /* Control Modals */
+  .slider-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
   .slider-head { display: flex; justify-content: space-between; align-items: center; }
-  .slider-label { font-size: 12px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-  .slider-val { font-size: 13px; color: #f1f5f9; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); padding: 2px 10px; border-radius: 6px; font-family: monospace; }
-  .slider-hint { font-size: 11px; color: #475569; line-height: 1.5; }
-  input[type=range] { width: 100%; height: 4px; border-radius: 2px; outline: none; border: none; cursor: pointer; appearance: none; -webkit-appearance: none; accent-color: #6366f1; background: #1e293b; }
-  input[type=range]::-webkit-slider-thumb { width: 16px; height: 16px; border-radius: 50%; background: #6366f1; cursor: pointer; -webkit-appearance: none; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 0 8px rgba(99,102,241,0.5); }
-  .done-btn { margin-top: 20px; width: 100%; padding: 13px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
-
-  /* Image Picker */
-  .picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .picker-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #fff; }
-  .picker-item:hover { border-color: #6366f1; }
+  .slider-label { font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .slider-val { font-size: 12px; color: #818cf8; font-weight: 700; background: rgba(99,102,241,0.1); padding: 2px 8px; border-radius: 4px; font-family: monospace; }
+  .slider-hint { font-size: 11px; color: #475569; line-height: 1.4; }
+  input[type=range] { width: 100%; height: 5px; border-radius: 3px; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none; background: #1e293b; }
+  input[type=range]::-webkit-slider-thumb { width: 14px; height: 14px; border-radius: 50%; background: #6366f1; cursor: pointer; -webkit-appearance: none; }
+  
+  .picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; }
+  .picker-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #fff; }
   .picker-item img { width: 100%; height: 100%; object-fit: contain; }
-  .picker-empty { grid-column: 1 / -1; text-align: center; color: #64748b; padding: 20px; font-size: 13px; }
+  .picker-item:hover { border-color: #6366f1; }
+  .picker-empty { grid-column: 1 / -1; text-align: center; color: #475569; padding: 20px; font-size: 12px; font-weight: 600; }
+  .done-btn { margin-top: 10px; width: 100%; padding: 13px; background: linear-gradient(135deg,#4f46e5,#7c3aed); color: white; border-radius: 12px; font-weight: 700; font-size: 14px; border: none; cursor: pointer; }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="canvas-area">
-    <canvas id="output-canvas" width="1920" height="1080"></canvas>
-    <button id="stop-btn" onclick="stopAnimation()">⏹ Stop</button>
+    <div id="canvas-container">
+      <canvas id="output-canvas" width="1920" height="1080"></canvas>
+      <div id="spots-overlay"></div>
+    </div>
+    <button id="stop-btn" onclick="stopAnimation()">⏹ Stop Animation</button>
     
-    <div id="spots-overlay"></div>
-
     <div id="empty-state">
-      <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.1));border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:28px;">🎨</div>
-      <h2>Select a Layout</h2>
-      <p>Pick a grid style, upload your images, and tap the dots to assign where they sketch.</p>
-      <button class="btn btn-primary" onclick="openModal('layout-modal')">⊞ Choose Layout</button>
+      <div style="font-size:32px; margin-bottom:12px;">🎨</div>
+      <h2>Select Grid Blueprint</h2>
+      <p>Configure your workspace display rules, load your image sets, and assign placement tracking.</p>
+      <button class="btn btn-primary" onclick="openModal('layout-modal')">⊞ Select Layout</button>
     </div>
   </div>
 
   <div id="bottom-bar">
     <div id="info-bar">
-      <div id="info-text">Tray: <span id="img-count">0 images</span></div>
-      <button id="layout-btn" onclick="openModal('layout-modal')">⊞ <span id="layout-label">No Layout</span></button>
+      <div id="info-text">Storage: <span id="img-count">0 items</span></div>
+      <button id="layout-btn" onclick="openModal('layout-modal')">⊞ <span id="layout-label">No Grid Layout</span></button>
     </div>
     <div id="thumbs">
       <div id="add-btn" onclick="document.getElementById('file-input').click()">
-        <span style="font-size:18px;color:#6366f1">+</span><span>ADD</span>
+        <span style="font-size:16px;">+</span><span>UPLOAD</span>
       </div>
     </div>
     <div id="action-row">
       <button id="settings-btn" onclick="openModal('settings-modal')">⚙️</button>
-      <button id="play-btn" onclick="playAnimation()">▶ Play Video</button>
+      <button id="play-btn" onclick="playAnimation()">▶ Play Canvas Video</button>
     </div>
   </div>
 </div>
@@ -112,7 +117,7 @@
 <div class="modal-bg" id="layout-modal">
   <div class="modal">
     <div class="modal-head">
-      <h3>Select Grid Layout</h3>
+      <h3>Select Video Layout</h3>
       <button class="close-btn" onclick="closeModal('layout-modal')">✕</button>
     </div>
     <div class="grid2" id="layout-grid"></div>
@@ -122,7 +127,7 @@
 <div class="modal-bg" id="picker-modal">
   <div class="modal">
     <div class="modal-head">
-      <h3>Assign Image to Spot</h3>
+      <h3>Route Image to Grid Spot</h3>
       <button class="close-btn" onclick="closeModal('picker-modal')">✕</button>
     </div>
     <div class="picker-grid" id="picker-grid"></div>
@@ -132,43 +137,43 @@
 <div class="modal-bg" id="settings-modal">
   <div class="modal">
     <div class="modal-head">
-      <h3>Settings</h3>
+      <h3>System Configurations</h3>
       <button class="close-btn" onclick="closeModal('settings-modal')">✕</button>
     </div>
     <div class="slider-row">
-      <div class="slider-head"><span class="slider-label">Marker Thickness</span><span class="slider-val" id="val-thickness">2px</span></div>
+      <div class="slider-head"><span class="slider-label">Line Weight</span><span class="slider-val" id="val-thickness">2.5px</span></div>
       <input type="range" min="1" max="6" step="0.5" value="2.5" id="sl-thickness" oninput="updateSlider('thickness')"/>
     </div>
     <div class="slider-row">
-      <div class="slider-head"><span class="slider-label">Darkness Threshold</span><span class="slider-val" id="val-darkness">140</span></div>
-      <input type="range" min="40" max="220" value="140" id="sl-darkness" oninput="updateSlider('darkness')"/>
-      <span class="slider-hint">Lower limits ink to true lines; higher catches lighter shades.</span>
+      <div class="slider-head"><span class="slider-label">Binarization Darkness</span><span class="slider-val" id="val-darkness">135</span></div>
+      <input type="range" min="40" max="210" value="135" id="sl-darkness" oninput="updateSlider('darkness')"/>
+      <span class="slider-hint">Higher index values read lighter details as draw target coordinates.</span>
     </div>
     <div class="slider-row">
-      <div class="slider-head"><span class="slider-label">Draw Speed (Seconds)</span><span class="slider-val" id="val-duration">4s</span></div>
-      <input type="range" min="1" max="12" value="4" id="sl-duration" oninput="updateSlider('duration')"/>
+      <div class="slider-head"><span class="slider-label">Sketch Pace (Sec)</span><span class="slider-val" id="val-duration">4s</span></div>
+      <input type="range" min="1" max="10" value="4" id="sl-duration" oninput="updateSlider('duration')"/>
     </div>
-    <button class="done-btn" onclick="closeModal('settings-modal')">Done</button>
+    <button class="done-btn" onclick="closeModal('settings-modal')">Apply Engine Settings</button>
   </div>
 </div>
 
 <script>
-// ---- State & Global Configurations ----
+// ---- Core Execution Variables ----
 let uploadedImages = []; 
 let currentLayout = null;
 let assignedOrderCounter = 1;
 let activeSpotIndex = null;
-let spotAssignments = {}; // spotIndex -> { imageId, order }
+let spotAssignments = {}; 
 let animRaf = null;
 let stopFlag = false;
+let isPlaying = false;
 let handImg = null;
 
-const settings = { thickness: 2.5, darkness: 140, duration: 4, handSize: 220 };
+const settings = { thickness: 2.5, darkness: 135, duration: 4, handSize: 220 };
 
-// Reconstruct original Hand SVG asset
+// Safe encoding-proof SVG configuration
 const HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" style="overflow:visible">
-  <defs><filter id="sh"><feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.3"/></filter></defs>
-  <g filter="url(#sh)">
+  <g>
     <path d="M120 400 L350 120 L370 135 L140 415 Z" fill="#2C3E50"/>
     <path d="M120 400 L140 415 L90 450 Z" fill="#E0C097"/>
     <path d="M280 350 C 350 300,450 400,480 600" stroke="#F5D0C5" stroke-width="130" stroke-linecap="round"/>
@@ -183,50 +188,39 @@ const HAND_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" 
 </svg>`;
 const hImg = new Image();
 hImg.onload = () => { handImg = hImg; };
-hImg.src = 'data:image/svg+xml;base64,' + btoa(HAND_SVG);
+hImg.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(HAND_SVG);
 
-// Responsive layouts mapped inside internal 1920x1080 bounds
+// Clean Layout Matrix mapping proportional bounding spaces 1:1 down to standard 16:9 box bounds
 const layouts = {
-  '1x1': { label: '1 Center', dots: [{x: 0.5, y: 0.5, size: 45}] },
-  '2x1': { label: '2×1 Row', dots: [{x: 0.28, y: 0.5, size: 35}, {x: 0.72, y: 0.5, size: 35}] },
-  '2x2': { label: '2×2 Grid', dots: [{x: 0.28, y: 0.28, size: 30}, {x: 0.72, y: 0.28, size: 30}, {x: 0.28, y: 0.72, size: 30}, {x: 0.72, y: 0.72, size: 30}] },
-  '1x3': { label: '1×3 Column', dots: [{x: 0.5, y: 0.2, size: 24}, {x: 0.5, y: 0.5, size: 24}, {x: 0.5, y: 0.8, size: 24}] },
-  '2x3': { label: '2×3 Grid', dots: [{x: 0.3, y: 0.2, size: 22}, {x: 0.7, y: 0.2, size: 22}, {x: 0.3, y: 0.5, size: 22}, {x: 0.7, y: 0.5, size: 22}, {x: 0.3, y: 0.8, size: 22}, {x: 0.7, y: 0.8, size: 22}] },
-  '1x4': { label: '1×4 Column', dots: [{x: 0.5, y: 0.16, size: 18}, {x: 0.5, y: 0.38, size: 18}, {x: 0.5, y: 0.62, size: 18}, {x: 0.5, y: 0.84, size: 18}] },
-  '3x3': { label: '3×3 Grid', dots: [
-    {x: 0.22, y: 0.2, size: 20}, {x: 0.5, y: 0.2, size: 20}, {x: 0.78, y: 0.2, size: 20},
-    {x: 0.22, y: 0.5, size: 20}, {x: 0.5, y: 0.5, size: 20}, {x: 0.78, y: 0.5, size: 20},
-    {x: 0.22, y: 0.8, size: 20}, {x: 0.5, y: 0.8, size: 20}, {x: 0.78, y: 0.8, size: 20}
+  '1x1': { label: '1 Center Box', dots: [{x: 0.5, y: 0.5, w: 0.45, h: 0.75}] },
+  '2x1': { label: '2×1 Split Row', dots: [{x: 0.26, y: 0.5, w: 0.38, h: 0.65}, {x: 0.74, y: 0.5, w: 0.38, h: 0.65}] },
+  '2x2': { label: '2×2 Creative Grid', dots: [
+    {x: 0.26, y: 0.26, w: 0.38, h: 0.42}, {x: 0.74, y: 0.26, w: 0.38, h: 0.42},
+    {x: 0.26, y: 0.74, w: 0.38, h: 0.42}, {x: 0.74, y: 0.74, w: 0.38, h: 0.42}
   ]},
-  'circle': { label: 'Circle (1+6)', dots: [
-    {x: 0.5, y: 0.5, size: 26}, // Center
-    {x: 0.5, y: 0.18, size: 20}, // Top
-    {x: 0.76, y: 0.34, size: 20}, // Top Right
-    {x: 0.76, y: 0.66, size: 20}, // Bottom Right
-    {x: 0.5, y: 0.82, size: 20}, // Bottom
-    {x: 0.24, y: 0.66, size: 20}, // Bottom Left
-    {x: 0.24, y: 0.34, size: 20}  // Top Left
+  '3x3': { label: '3×3 Production Block', dots: [
+    {x: 0.16, y: 0.16, w: 0.22, h: 0.24}, {x: 0.5, y: 0.16, w: 0.22, h: 0.24}, {x: 0.84, y: 0.16, w: 0.22, h: 0.24},
+    {x: 0.16, y: 0.5, w: 0.22, h: 0.24}, {x: 0.5, y: 0.5, w: 0.22, h: 0.24}, {x: 0.84, y: 0.5, w: 0.22, h: 0.24},
+    {x: 0.16, y: 0.84, w: 0.22, h: 0.24}, {x: 0.5, y: 0.84, w: 0.22, h: 0.24}, {x: 0.84, y: 0.84, w: 0.22, h: 0.24}
   ]}
 };
 
-// ---- Initialization ----
+// ---- App Entry Orchestration ----
 function initApp() {
   const g = document.getElementById('layout-grid');
   g.innerHTML = '';
   for (const [key, layout] of Object.entries(layouts)) {
     const btn = document.createElement('button');
     btn.className = `layout-opt`;
-    btn.innerHTML = `<div class="lo-label">${layout.label}</div><div style="font-size:11px;color:#64748b;">${layout.dots.length} spots</div>`;
+    btn.innerHTML = `<div class="lo-label">${layout.label}</div><div style="font-size:11px;color:#475569;">${layout.dots.length} interactive zones</div>`;
     btn.onclick = () => selectLayout(key);
     g.appendChild(btn);
   }
-  // Initialize values on the sliders
   updateSlider('thickness');
   updateSlider('darkness');
   updateSlider('duration');
 }
 
-// ---- Settings Sliders Logic ----
 function updateSlider(name) {
   const mapping = {
     thickness: ['sl-thickness', 'val-thickness', 'px'],
@@ -239,14 +233,10 @@ function updateSlider(name) {
   const val = parseFloat(el.value);
   settings[name] = val;
   document.getElementById(valId).textContent = val + unit;
-
-  // Background fill accent color trick
-  const pct = ((val - parseFloat(el.min)) / (parseFloat(el.max) - parseFloat(el.min))) * 100;
-  el.style.background = `linear-gradient(to right, #6366f1 ${pct}%, #1e293b ${pct}%)`;
 }
 
-// ---- Layout Handling ----
 function selectLayout(layoutKey) {
+  if (isPlaying) return;
   currentLayout = layoutKey;
   spotAssignments = {}; 
   assignedOrderCounter = 1;
@@ -254,12 +244,10 @@ function selectLayout(layoutKey) {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('layout-label').textContent = layouts[layoutKey].label;
   
-  const canvas = document.getElementById('output-canvas');
-  const overlay = document.getElementById('spots-overlay');
-  canvas.style.display = 'block';
-  overlay.style.display = 'block';
+  const container = document.getElementById('canvas-container');
+  container.style.display = 'block';
   
-  // Clear layout preview drawing area
+  const canvas = document.getElementById('output-canvas');
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -274,14 +262,14 @@ function renderSpots() {
   overlay.innerHTML = '';
   if (!currentLayout) return;
 
-  const dots = layouts[currentLayout].dots;
-  dots.forEach((dot, index) => {
+  layouts[currentLayout].dots.forEach((dot, index) => {
     const spotDiv = document.createElement('div');
     spotDiv.className = 'spot';
+    // Match strict layout bounding metrics cleanly down inside 16:9 container positions
     spotDiv.style.left = `${dot.x * 100}%`;
     spotDiv.style.top = `${dot.y * 100}%`;
-    spotDiv.style.width = `${dot.size}vmin`;
-    spotDiv.style.height = `${dot.size}vmin`;
+    spotDiv.style.width = `${dot.w * 100}%`;
+    spotDiv.style.height = `${dot.h * 100}%`;
     
     spotDiv.onclick = () => openPicker(index);
 
@@ -301,7 +289,7 @@ function renderSpots() {
   });
 }
 
-// ---- File Handling ----
+// ---- Async IO Asset Upload Operations ----
 function handleFileInput(input) {
   const files = Array.from(input.files || []);
   if (!files.length) return;
@@ -309,7 +297,7 @@ function handleFileInput(input) {
   files.forEach((file, idx) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      uploadedImages.push({ id: Date.now() + idx, src: e.target.result });
+      uploadedImages.push({ id: Date.now() + idx + Math.random(), src: e.target.result });
       renderTray();
     };
     reader.readAsDataURL(file);
@@ -332,14 +320,14 @@ function renderTray() {
   thumbsEl.appendChild(addBtn);
 }
 
-// ---- Assignment Picker ----
 function openPicker(spotIndex) {
+  if (isPlaying) return;
   activeSpotIndex = spotIndex;
   const grid = document.getElementById('picker-grid');
   grid.innerHTML = '';
   
   if (uploadedImages.length === 0) {
-    grid.innerHTML = `<div class="picker-empty">No images uploaded yet.<br>Click "+ ADD" at the bottom first!</div>`;
+    grid.innerHTML = `<div class="picker-empty">Asset storage empty.<br>Upload images at the bottom bar first!</div>`;
   } else {
     uploadedImages.forEach(img => {
       const item = document.createElement('div');
@@ -371,16 +359,17 @@ function updatePlayButton() {
   const assignedCount = Object.keys(spotAssignments).length;
   if (assignedCount > 0) {
     btn.classList.add('ready');
-    btn.textContent = `▶ Play Layout (${assignedCount} Assigned)`;
+    btn.textContent = `▶ Play Sequences (${assignedCount} Routed)`;
   } else {
     btn.classList.remove('ready');
-    btn.textContent = `▶ Play Video`;
+    btn.textContent = `▶ Play Canvas Video`;
   }
 }
 
-// ---- Drawing Engine Core ----
+// ---- Drawing Processing Engine ----
 function stopAnimation() {
   stopFlag = true;
+  isPlaying = false;
   if (animRaf) cancelAnimationFrame(animRaf);
   document.getElementById('stop-btn').style.display = 'none';
   document.getElementById('spots-overlay').style.display = 'block';
@@ -388,18 +377,17 @@ function stopAnimation() {
 
 function processImagePoints(imgElement, targetW, targetH) {
   const canvasOff = document.createElement('canvas');
-  canvasOff.width = 300; 
-  canvasOff.height = Math.floor(300 * (targetH / targetW));
+  canvasOff.width = 200; 
+  canvasOff.height = Math.floor(200 * (targetH / targetW));
   const ctxOff = canvasOff.getContext('2d');
   ctxOff.fillStyle = 'white';
   ctxOff.fillRect(0, 0, canvasOff.width, canvasOff.height);
   
-  // Fit image proportionally
   const imgAspect = imgElement.width / imgElement.height;
-  const canvasAspect = canvasOff.width / canvasOff.height;
+  const boxAspect = targetW / targetH;
   let drawW = canvasOff.width, drawH = canvasOff.height, xOffset = 0, yOffset = 0;
   
-  if (imgAspect > canvasAspect) {
+  if (imgAspect > boxAspect) {
     drawH = canvasOff.width / imgAspect;
     yOffset = (canvasOff.height - drawH) / 2;
   } else {
@@ -417,16 +405,12 @@ function processImagePoints(imgElement, targetW, targetH) {
       const idx = (y * canvasOff.width + x) * 4;
       const brightness = (data[idx] + data[idx+1] + data[idx+2]) / 3;
       if (brightness < settings.darkness) {
-        // Map downscale coordinates back up to layout box spacing sizes
-        rawPoints.push({
-          relX: x / canvasOff.width,
-          relY: y / canvasOff.height
-        });
+        rawPoints.push({ relX: x / canvasOff.width, relY: y / canvasOff.height });
       }
     }
   }
   
-  // Sort spatially so lines look like consecutive natural strokes
+  // Continuous Spatial Sort Logic
   let sortedPoints = [];
   if (rawPoints.length > 0) {
     let current = rawPoints.shift();
@@ -434,8 +418,7 @@ function processImagePoints(imgElement, targetW, targetH) {
     while (rawPoints.length > 0) {
       let nearestIdx = 0;
       let minDist = Infinity;
-      // Sampling window check to keep execution ultra fast
-      const maxSearch = Math.min(rawPoints.length, 120); 
+      const maxSearch = Math.min(rawPoints.length, 150); 
       for (let i = 0; i < maxSearch; i++) {
         const dx = rawPoints[i].relX - current.relX;
         const dy = rawPoints[i].relY - current.relY;
@@ -450,6 +433,7 @@ function processImagePoints(imgElement, targetW, targetH) {
 }
 
 function playAnimation() {
+  if (isPlaying) return;
   const sequence = Object.entries(spotAssignments).map(([spotIndex, data]) => ({
     spotIndex: parseInt(spotIndex),
     imageId: data.imageId,
@@ -459,17 +443,15 @@ function playAnimation() {
   if (sequence.length === 0) return;
 
   stopFlag = false;
+  isPlaying = true;
   document.getElementById('spots-overlay').style.display = 'none';
   document.getElementById('stop-btn').style.display = 'block';
 
   const canvas = document.getElementById('output-canvas');
   const ctx = canvas.getContext('2d');
-  
-  // Clear frame base canvas to clean white
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Pre-cache actual HTML Image Elements to process bitmap data arrays
   let loadedCount = 0;
   sequence.forEach((item) => {
     const rawImgData = uploadedImages.find(img => img.id === item.imageId);
@@ -490,10 +472,10 @@ function startSequencePlayback(sequence, canvas, ctx) {
   
   function nextImageStep() {
     if (sequenceIndex >= sequence.length || stopFlag) {
-      // Finished all spots drawing sequence! Clean final display render frame
       if(!stopFlag) {
         renderStaticStateWithNoHand(sequence, canvas, ctx);
       }
+      isPlaying = false;
       document.getElementById('stop-btn').style.display = 'none';
       document.getElementById('spots-overlay').style.display = 'block';
       return;
@@ -502,49 +484,44 @@ function startSequencePlayback(sequence, canvas, ctx) {
     const currentItem = sequence[sequenceIndex];
     const dotSpec = layouts[currentLayout].dots[currentItem.spotIndex];
     
-    // Transform layout bounds to matching 1920x1080 resolution coordinates
-    const targetBoxSize = (dotSpec.size / 100) * 1400; // Normalized safe fitting size metric
-    const startX = (dotSpec.x * canvas.width) - (targetBoxSize / 2);
-    const startY = (dotSpec.y * canvas.height) - (targetBoxSize / 2);
+    // Internal 1920x1080 resolution target tracking metrics
+    const targetW = dotSpec.w * canvas.width;
+    const targetH = dotSpec.h * canvas.height;
+    const startX = (dotSpec.x * canvas.width) - (targetW / 2);
+    const startY = (dotSpec.y * canvas.height) - (targetH / 2);
 
-    const points = processImagePoints(currentItem.imgElement, targetBoxSize, targetBoxSize);
+    const points = processImagePoints(currentItem.imgElement, targetW, targetH);
     
     let pointsIndex = 0;
-    const totalDurationMs = settings.duration * 1000;
-    const fpsInterval = 1000 / 60;
-    const totalFrames = totalDurationMs / fpsInterval;
+    const totalFrames = (settings.duration * 1000) / (1000 / 60);
     const pointsPerFrame = Math.max(1, Math.ceil(points.length / totalFrames));
-
-    // Save previous canvas frame cache to cleanly clear/draw hand frame instances
     const baseSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     function frameLoop() {
       if (stopFlag) return;
 
       if (pointsIndex >= points.length) {
-        // Current image finish sketching, progress to subsequent assignment spot
         sequenceIndex++;
-        setTimeout(nextImageStep, 300);
+        setTimeout(nextImageStep, 200);
         return;
       }
 
-      // Restoring background canvas line progress
       ctx.putImageData(baseSnapshot, 0, 0);
 
-      // Append new lines to current point tracking
-      ctx.strokeStyle = '#000000';
+      ctx.strokeStyle = '#111827';
       ctx.lineWidth = settings.thickness;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
       const limit = Math.min(pointsIndex + pointsPerFrame, points.length);
       
-      // Draw path sequence history
       ctx.beginPath();
       for (let i = 0; i < limit; i++) {
-        const ptX = startX + (points[i].relX * targetBoxSize);
-        const ptY = startY + (points[i].relY * targetBoxSize);
-        if (i === 0 || (i > 0 && Math.abs(points[i].relX - points[i-1].relX) > 0.1)) {
+        const ptX = startX + (points[i].relX * targetW);
+        const ptY = startY + (points[i].relY * targetH);
+        
+        // Prevent drawing wild diagonal anchor lines between disconnected strokes
+        if (i === 0 || (i > 0 && (Math.abs(points[i].relX - points[i-1].relX) > 0.15 || Math.abs(points[i].relY - points[i-1].relY) > 0.15))) {
           ctx.moveTo(ptX, ptY);
         } else {
           ctx.lineTo(ptX, ptY);
@@ -552,27 +529,21 @@ function startSequencePlayback(sequence, canvas, ctx) {
       }
       ctx.stroke();
 
-      // Overwrite base snapshot cache with newly extended lines drawn
       const updatedSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-      // Draw the interactive floating hand overlay at current pen tip index target
       if (handImg && limit > 0) {
-        const tipX = startX + (points[limit - 1].relX * targetBoxSize);
-        const tipY = startY + (points[limit - 1].relY * targetBoxSize);
-        // Offset hand coordinates to place pen edge accurately on target ink pixels
+        const tipX = startX + (points[limit - 1].relX * targetW);
+        const tipY = startY + (points[limit - 1].relY * targetH);
         ctx.drawImage(handImg, tipX - 65, tipY - 215, settings.handSize, settings.handSize);
       }
 
-      // Commit tracking steps forward
       pointsIndex = limit;
       baseSnapshot.data.set(updatedSnapshot.data);
 
       animRaf = requestAnimationFrame(frameLoop);
     }
-
     frameLoop();
   }
-
   nextImageStep();
 }
 
@@ -582,21 +553,23 @@ function renderStaticStateWithNoHand(sequence, canvas, ctx) {
   
   sequence.forEach((currentItem) => {
     const dotSpec = layouts[currentLayout].dots[currentItem.spotIndex];
-    const targetBoxSize = (dotSpec.size / 100) * 1400;
-    const startX = (dotSpec.x * canvas.width) - (targetBoxSize / 2);
-    const startY = (dotSpec.y * canvas.height) - (targetBoxSize / 2);
+    const targetW = dotSpec.w * canvas.width;
+    const targetH = dotSpec.h * canvas.height;
+    const startX = (dotSpec.x * canvas.width) - (targetW / 2);
+    const startY = (dotSpec.y * canvas.height) - (targetH / 2);
     
-    const points = processImagePoints(currentItem.imgElement, targetBoxSize, targetBoxSize);
+    const points = processImagePoints(currentItem.imgElement, targetW, targetH);
     
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = '#111827';
     ctx.lineWidth = settings.thickness;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     
     ctx.beginPath();
     for (let i = 0; i < points.length; i++) {
-      const ptX = startX + (points[i].relX * targetBoxSize);
-      const ptY = startY + (points[i].relY * targetBoxSize);
-      if (i === 0 || (i > 0 && Math.abs(points[i].relX - points[i-1].relX) > 0.1)) {
+      const ptX = startX + (points[i].relX * targetW);
+      const ptY = startY + (points[i].relY * targetH);
+      if (i === 0 || (i > 0 && (Math.abs(points[i].relX - points[i-1].relX) > 0.15 || Math.abs(points[i].relY - points[i-1].relY) > 0.15))) {
         ctx.moveTo(ptX, ptY);
       } else {
         ctx.lineTo(ptX, ptY);
@@ -606,7 +579,6 @@ function renderStaticStateWithNoHand(sequence, canvas, ctx) {
   });
 }
 
-// Boot setup listeners
 initApp();
 </script>
 </body>
