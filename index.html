@@ -225,14 +225,13 @@ const LAYOUTS = {
     return cells;
   }},
   'cross': { label:'Cross +', icon:'✚', spots:5, fn: ()=>{
-    // Plus/Cross: top, left, center, right, bottom
-    const S=340,G=24,cx=960,cy=540;
+    const S=300,G=28,cx=960,cy=540;
     return [
-      {x:cx-S/2, y:cy-S-G-S/2+S/2, w:S,h:S},   // top
-      {x:cx-S-G-S/2+S/2, y:cy-S/2, w:S,h:S},   // left
-      {x:cx-S/2, y:cy-S/2, w:S,h:S},             // center
-      {x:cx+G+S/2-S/2, y:cy-S/2, w:S,h:S},      // right
-      {x:cx-S/2, y:cy+G+S/2-S/2, w:S,h:S},      // bottom
+      {x:cx-S/2,        y:cy-S-G,          w:S,h:S}, // top
+      {x:cx-S-G,        y:cy-S/2,          w:S,h:S}, // left
+      {x:cx-S/2,        y:cy-S/2,          w:S,h:S}, // center
+      {x:cx+G,          y:cy-S/2,          w:S,h:S}, // right
+      {x:cx-S/2,        y:cy+G,            w:S,h:S}, // bottom
     ];
   }},
   'diamond': { label:'Diamond', icon:'◆', spots:5, fn: ()=>{
@@ -602,7 +601,7 @@ async function playAnimation() {
   document.getElementById('stop-btn').style.display='flex';
   document.getElementById('progress-bar').style.display='block';
 
-  // Persistent canvas
+  // One persistent canvas for the whole session — never cleared between images
   const pc=document.createElement('canvas'); pc.width=CW; pc.height=CH;
   const pCtx=pc.getContext('2d');
   pCtx.fillStyle='#fff'; pCtx.fillRect(0,0,CW,CH);
@@ -619,7 +618,7 @@ async function playAnimation() {
 
     const cell = cells[spotIdx];
 
-    // Show processing
+    // Show processing — composite over existing drawings
     document.getElementById('processing-overlay').style.display='flex';
     document.getElementById('proc-text').textContent=`Analyzing spot ${si+1} of ${assignedSpots.length}…`;
     document.getElementById('progress-fill').style.width='0%';
@@ -634,7 +633,7 @@ async function playAnimation() {
     badge.style.display='flex';
     badge.innerHTML=`<span>Spot ${spotIdx+1}</span><span style="color:#334155">·</span><span style="color:#818cf8">${si+1} of ${assignedSpots.length}</span>`;
 
-    // Phase 1: draw B&W sketch
+    // Phase 1: draw B&W sketch — accumulate onto pCtx (never wipe it)
     const dMs=snap.duration*1000;
     let t0=null,prevIdx=0;
     await new Promise(resolve=>{
@@ -653,6 +652,7 @@ async function playAnimation() {
             const pt=points[sIdx+k];if(!pt)continue;last=pt;
             pCtx.beginPath();pCtx.arc(pt.x,pt.y,snap.thickness,0,Math.PI*2);pCtx.fill();
           }
+          // Always composite pCtx → oCtx (all previous drawings stay)
           oCtx.drawImage(pc,0,0);
           if(handImg.complete&&last){
             const hW=snap.handSize,hH=(handImg.height/handImg.width)*hW;
@@ -662,14 +662,13 @@ async function playAnimation() {
         prevIdx=tIdx;
         if(t<1){animRaf=requestAnimationFrame(frame);}
         else{
-          // Phase 2: pop in full color image
+          // Phase 2: pop color for this spot onto pCtx so it stays for future spots
           if(colorCanvas){
-            pCtx.drawImage(colorCanvas,0,0);
-            oCtx.drawImage(pc,0,0);
-          } else {
-            oCtx.drawImage(pc,0,0);
+            // Only draw the cell region from colorCanvas onto pCtx
+            pCtx.drawImage(colorCanvas, cell.x, cell.y, cell.w, cell.h, cell.x, cell.y, cell.w, cell.h);
           }
-          setTimeout(resolve,600);
+          oCtx.drawImage(pc,0,0);
+          setTimeout(resolve,300);
         }
       };
       animRaf=requestAnimationFrame(frame);
