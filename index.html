@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -202,105 +202,56 @@ const LAYOUTS = {
   }},
   '2x2': { label:'2×2', icon:'⊞', spots:4, fn: ()=>{
     const W=876,H=456,G=24,P=60;
-    return [
-      {x:P,y:P,w:W,h:H},{x:P+W+G,y:P,w:W,h:H},
-      {x:P,y:P+H+G,w:W,h:H},{x:P+W+G,y:P+H+G,w:W,h:H}
-    ];
+    return [{x:P,y:P,w:W,h:H},{x:P+W+G,y:P,w:W,h:H},{x:P,y:P+H+G,w:W,h:H},{x:P+W+G,y:P+H+G,w:W,h:H}];
   }},
   '2x3': { label:'2×3', icon:'⊟', spots:6, fn: ()=>{
-    const cW=576,cH=456,G=24,P=60;
-    const cells=[];
-    for(let r=0;r<2;r++) for(let c=0;c<3;c++)
-      cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
+    const cW=576,cH=456,G=24,P=60; const cells=[];
+    for(let r=0;r<2;r++) for(let c=0;c<3;c++) cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
     return cells;
   }},
-  '2x4': { label:'2×4', icon:'⊟⊟', spots:8, fn: ()=>{
-    const G=24,P=60;
-    const cW=(CW-2*P-3*G)/4, cH=(CH-2*P-G)/2;
-    const cells=[];
-    for(let r=0;r<2;r++) for(let c=0;c<4;c++)
-      cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
+  '2x4': { label:'2×4', icon:'▦', spots:8, fn: ()=>{
+    const cW=420,cH=456,G=24,P=60; const cells=[];
+    for(let r=0;r<2;r++) for(let c=0;c<4;c++) cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
     return cells;
   }},
   '3x3': { label:'3×3', icon:'⊞⊞', spots:9, fn: ()=>{
-    const cW=576,cH=296,G=24,P=60;
-    const cells=[];
-    for(let r=0;r<3;r++) for(let c=0;c<3;c++)
-      cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
+    const cW=576,cH=296,G=24,P=60; const cells=[];
+    for(let r=0;r<3;r++) for(let c=0;c<3;c++) cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
     return cells;
   }},
-  '3x4': { label:'3×4', icon:'⊞⊟', spots:12, fn: ()=>{
-    const G=20,P=50;
-    const cW=(CW-2*P-3*G)/4, cH=(CH-2*P-2*G)/3;
-    const cells=[];
-    for(let r=0;r<3;r++) for(let c=0;c<4;c++)
-      cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
+  '3x4': { label:'3×4', icon:'⊟⊟', spots:12, fn: ()=>{
+    const cW=420,cH=296,G=24,P=60; const cells=[];
+    for(let r=0;r<3;r++) for(let c=0;c<4;c++) cells.push({x:P+c*(cW+G),y:P+r*(cH+G),w:cW,h:cH});
     return cells;
   }},
-  'cross': { label:'Cross', icon:'➕', spots:5, fn: ()=>{
-    // Plus/cross made of 5 equal square-ish cells: center + up/down/left/right
-    const G=24,P=60;
-    const cell=(CW-2*P-2*G)/3; // 3 columns worth, square cells
-    const cellH=(CH-2*P-2*G)/3;
-    const size=Math.min(cell,cellH);
-    const cx=CW/2, cy=CH/2;
+  'cross': { label:'Cross +', icon:'✚', spots:5, fn: ()=>{
+    // Plus/Cross: top, left, center, right, bottom
+    const S=340,G=24,cx=960,cy=540;
     return [
-      {x:cx-size/2, y:cy-size/2, w:size, h:size},        // center
-      {x:cx-size/2, y:cy-size/2-size-G, w:size, h:size},  // top
-      {x:cx-size/2, y:cy-size/2+size+G, w:size, h:size},  // bottom
-      {x:cx-size/2-size-G, y:cy-size/2, w:size, h:size},  // left
-      {x:cx+size/2+G, y:cy-size/2, w:size, h:size},       // right
+      {x:cx-S/2, y:cy-S-G-S/2+S/2, w:S,h:S},   // top
+      {x:cx-S-G-S/2+S/2, y:cy-S/2, w:S,h:S},   // left
+      {x:cx-S/2, y:cy-S/2, w:S,h:S},             // center
+      {x:cx+G+S/2-S/2, y:cy-S/2, w:S,h:S},      // right
+      {x:cx-S/2, y:cy+G+S/2-S/2, w:S,h:S},      // bottom
     ];
   }},
-  'plus': { label:'Plus', icon:'✚', spots:9, fn: ()=>{
-    // Fatter plus shape (each arm is 2 cells thick instead of 1) built on a 3x3 unit grid
-    // Total cells: 1 center + 4 arms x 2 segments = 9
-    const G=20,P=70;
-    const armW=(CW-2*P-2*G)/3;   // width of one grid unit (center column width)
-    const armH=(CH-2*P-2*G)/3;   // height of one grid unit (center row height)
-    const cx=CW/2, cy=CH/2;
-    const segH = armH/2 - G/2;   // each vertical-arm segment is half the unit height
-    const segW = armW/2 - G/2;   // each horizontal-arm segment is half the unit width
-    const cells = [];
-    // center
-    cells.push({x:cx-armW/2, y:cy-armH/2, w:armW, h:armH});
-    // top arm (2 segments stacked above center)
-    cells.push({x:cx-armW/2, y:cy-armH/2-G-segH, w:armW, h:segH});
-    cells.push({x:cx-armW/2, y:cy-armH/2-2*G-2*segH, w:armW, h:segH});
-    // bottom arm (2 segments stacked below center)
-    cells.push({x:cx-armW/2, y:cy+armH/2+G, w:armW, h:segH});
-    cells.push({x:cx-armW/2, y:cy+armH/2+2*G+segH, w:armW, h:segH});
-    // left arm (2 segments)
-    cells.push({x:cx-armW/2-G-segW, y:cy-armH/2, w:segW, h:armH});
-    cells.push({x:cx-armW/2-2*G-2*segW, y:cy-armH/2, w:segW, h:armH});
-    // right arm (2 segments)
-    cells.push({x:cx+armW/2+G, y:cy-armH/2, w:segW, h:armH});
-    cells.push({x:cx+armW/2+2*G+segW, y:cy-armH/2, w:segW, h:armH});
-    return cells;
-  }},
   'diamond': { label:'Diamond', icon:'◆', spots:5, fn: ()=>{
-    // Diamond arrangement: top, left, center, right, bottom — like cross but rotated visually via spacing (kept square cells, diamond layout = same coords as cross but distinct icon/preset for clarity)
-    const G=24,P=60;
-    const size=Math.min((CW-2*P-2*G)/3,(CH-2*P-2*G)/3)*0.9;
-    const cx=CW/2, cy=CH/2;
-    const dx = size+G, dy=size+G;
+    // Diamond: top, mid-left, center, mid-right, bottom
+    const S=300,cx=960,cy=540,rx=420,ry=360;
     return [
-      {x:cx-size/2, y:cy-size/2, w:size, h:size},          // center
-      {x:cx-size/2, y:cy-size/2-dy, w:size, h:size},        // top
-      {x:cx-size/2, y:cy-size/2+dy, w:size, h:size},        // bottom
-      {x:cx-size/2-dx, y:cy-size/2, w:size, h:size},        // left
-      {x:cx-size/2+dx, y:cy-size/2, w:size, h:size},        // right
+      {x:cx-S/2, y:cy-ry-S/2, w:S,h:S},         // top
+      {x:cx-rx-S/2, y:cy-S/2, w:S,h:S},          // left
+      {x:cx-S/2, y:cy-S/2, w:S,h:S},             // center
+      {x:cx+rx-S/2, y:cy-S/2, w:S,h:S},          // right
+      {x:cx-S/2, y:cy+ry-S/2, w:S,h:S},          // bottom
     ];
   }},
   'circle': { label:'Circle', icon:'🔵', spots:7, fn: ()=>{
-    // 1 center + 6 around in a circle
     const cx=960,cy=540,r=340,size=260;
-    const cells=[{x:cx-size/2,y:cy-size/2,w:size,h:size}]; // center
+    const cells=[{x:cx-size/2,y:cy-size/2,w:size,h:size}];
     for(let i=0;i<6;i++){
       const angle=(i/6)*Math.PI*2 - Math.PI/2;
-      const sx=cx+r*Math.cos(angle);
-      const sy=cy+r*Math.sin(angle);
-      cells.push({x:Math.round(sx-size/2),y:Math.round(sy-size/2),w:size,h:size});
+      cells.push({x:Math.round(cx+r*Math.cos(angle)-size/2),y:Math.round(cy+r*Math.sin(angle)-size/2),w:size,h:size});
     }
     return cells;
   }},
@@ -728,13 +679,14 @@ async function playAnimation() {
   document.getElementById('status-badge').style.display='none';
   document.getElementById('stop-btn').style.display='none';
   document.getElementById('progress-bar').style.display='none';
+
+  // Hold final result for 1 second, then clear canvas and show spots again
+  await new Promise(r=>setTimeout(r,1000));
+  oCtx.fillStyle='#fff'; oCtx.fillRect(0,0,CW,CH);
+
   document.getElementById('bottom-bar').style.display='flex';
   document.getElementById('spot-overlay').style.display='block';
-
-  // Full reset after animation completes so the page is ready for new images
-  if(!stopFlag){
-    clearAll();
-  }
+  document.getElementById('instruction').style.display = images.length>0?'block':'none';
 }
 
 function stopAnimation(){
@@ -754,4 +706,3 @@ drawSpots();
 </script>
 </body>
 </html>
-     
